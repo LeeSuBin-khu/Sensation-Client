@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import GNB from "./component/GNB";
 
@@ -18,9 +18,13 @@ import InsightCreate from "../src/component/insight/Create";
 /* Lounge 관련 */
 import Lounge from "../src/component/lounge/Main";
 import LoungeRoom from "./component/lounge_room/LoungeRoom";
+import LoungeRoomHandler from "./component/lounge_room/LoungeRoomHandler";
 
+/* Login 관련 */
 import Login from "../src/component/login/Login";
+import LoginLoading from "./component/login/LoginLoading";
 import SignUp from "../src/component/signup/SignUp";
+
 import MyPage from "../src/component/mypage/MyPage";
 import Landing from "../src/component/landing/Landing";
 
@@ -32,21 +36,30 @@ import Whiteboard from "./component/whiteboard/Whiteboard";
 
 import Ideation from "./component/ideation/Ideation";
 
+// font
+import "./assets/font/trap/Trap.css";
+import { useSelector } from "react-redux";
+
 function App() {
+  const showLoginModal = useSelector(state=>state.showLoginModal);
+
   // login이 되어있지 않다면 -> public page가 모두 보임 / privated가 모두 보이지 않음
   // login이 되어있다면 -> public과 private가 모두 보임 / public이고 restricted인 페이지는 안보임
 
   return (
     <div className="App">
-      
       {/* <NavigationBar /> */}
       <Router>
+        { showLoginModal && <Login /> }
+        <LoungeRoomHandler/>
         <GNB />
         <Routes>        
 
           {/* Private Pages */}  
-          <Route path="/insight" element={<PrivateOutlet/>}>
+          <Route path="/insight" elem={<PublicOutlet/>}>
             <Route exact path="" element={<InsightRead/>} />
+          </Route>
+          <Route path="/insight" elem={<PrivateOutlet/>}>
             <Route exact path="create" element={<InsightCreate/>} />
           </Route>
 
@@ -71,13 +84,16 @@ function App() {
             <Route exact path="" element={<Lounge/>} />
           </Route>
 
-          <Route path="/lounge-room/:mode" element={<PrivateOutlet/>}>
+          <Route path="/lounge-room/:id" element={<PrivateOutlet/>}>
             <Route path="" element={<LoungeRoom/>}/>
           </Route>
           
           {/* Public & restricted Pages */}
           <Route path="/login" element={<PublicOutlet/>} >
             <Route exact path="" element={<Login/>} />
+          </Route>
+          <Route path="/oauth2/redirect" element={<PublicOutlet/>} >
+            <Route exact path="" element={<LoginLoading/>} />
           </Route>
 
           <Route path="/signup" element={<PublicOutlet/>} >

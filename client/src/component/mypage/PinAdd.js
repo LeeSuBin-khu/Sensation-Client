@@ -98,7 +98,6 @@ function PinAdd(props) {
 
     useEffect(() => {
         pinboardImport();
-        console.log('clickedPersonaId: ', clickedPersonaId)
     }, [pinBoardName, clickedPersonaId])
 
     useEffect(() => {
@@ -495,27 +494,3 @@ function PinAdd(props) {
 }
 
 export default PinAdd;
-
-
-// return (
-    // (pinAddModalOpen?
-    // <div className="ModalAdd-Container" ref={modalAdd}>
-    //     <div className="Url-container">
-    //         <input className="url-input" value={urlValue} onChange={urlInputChange} placeholder="URL을 입력해주세요."/>
-    //     </div>
-    //     <div className="PinBoard-container">
-    //         {pinboard.map( board => (
-    //             <p className="board-name" id={board.id} onClick={pinBoardClickHandler}>{board.name}</p>
-    //         ))}
-    //     </div>
-    //     <div className="Tag-container">
-    //         <div className="tag-after"></div>
-    //         {tagList.length!==2?<input className="tag-before" value={tagValue} onChange={tagChangeHandler} onKeyPress={tagInputSubmitHandler} maxlength='8'/>:null}
-    //     </div>
-    //         {/* {tagList.length===2?<p>최대 2개까지 추가할 수 있습니다</p>:null} */}
-    //     <div className="Close-container">
-    //         <button className="close-btn" onClick={ModalAddCloseHandler}>저장</button>
-    //     </div>
-    // </div>
-    // :null)
-    // );

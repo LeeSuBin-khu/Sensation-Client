@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { Cookies } from 'react-cookie';
 import axios from 'axios';
+
 import { AiOutlinePlus } from 'react-icons/ai';
 import { FaExchangeAlt } from 'react-icons/fa';
 import { HiOutlinePlus } from 'react-icons/hi';
@@ -109,7 +110,7 @@ function MyPage() {
             const token = localStorage.getItem('token')
             try {
                 const res = await axios.get(
-                    process.env.REACT_APP_SERVER_HOST+'/api/auth', {
+                    process.env.REACT_APP_SERVER_HOST+'/api/auth/user', {
                         headers: {
                             Authorization: "Bearer " + token
                         }
@@ -235,7 +236,10 @@ function MyPage() {
                                     ? <div className="persona-profile">
                                         <div className="add-persona-btn"
                                             onClick={ goToAddPersona }
-                                        ><AiOutlinePlus/></div>
+                                        >
+                                            <HiOutlinePlus />
+                                            <div className="text">페르소나 추가</div>
+                                        </div>
                                     </div>
                                     /* persona가 있을 때 */
                                     : (activePersonaId === persona.id)

@@ -313,32 +313,3 @@ function PinUP(props) {
 }
 
 export default PinUP;
-
-// if(pageNum === 1) {
-    //     return (
-    //         <div className="Pinup-container">
-    //             <div className="PersonaImg-container">
-    //                 {personaImg.map(i => (
-    //                     <img className="persona-img" value={i.id} src={i.profileImgPath} width="200" height="200" onClick={personaImgClickHandler}></img>
-    //                 ))}
-    //             </div>
-    //             <div className="Pinboard-container">
-    //                 {pinboard.map( pin => (
-    //                     <p className="pinboard" id={pin.id} onClick={pinboadClickHandler}>{pin.name}</p>
-    //                 ))}
-    //             </div>
-    //             <div className="PinboardInput-container">
-    //                 <input className="pinboard-input" value={pinInputValue} onChange={pinboardChangeHandler} placeholder="새 핀보드명을 입력해주세요." />
-    //                 <button className="pinboard-btn" onClick={pinboardCreateClickHandler}></button>
-    //             </div>
-    //         </div>
-    //     );
-    // } else if(pageNum === 2) {
-    //     return (
-    //         <div className="Pinup-container">
-    //             <div>인사이트 추가</div>
-    //             <input placeholder="url을 입력해주세요" />
-    //             <button>다음</button>
-    //         </div>
-    //     );
-    // }
