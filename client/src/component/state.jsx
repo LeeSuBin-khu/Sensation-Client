@@ -17,7 +17,6 @@ export function useFetch(url, deps) {
                 }
             });
             setData(response.data);
-            console.log("Asdf")
         } catch(err) {
             console.log(err);
         }
@@ -68,28 +67,24 @@ export function LoungePinup(props) {
     
 
     return(
-        <img className='pin' src={pin} onClick={pinClickHandler} style={{zIndex: '-1'}}/>
+        <img className='pin' src={pin} onClick={pinClickHandler}/>
     );
 
 }
 
 export async function enterLounge(target, loungeId, personaId) {
     if(target.className !== 'pin') {
-        const cookies = new Cookies();
         const token = localStorage.getItem('token');
-    
         try {
             const response = await axios.put(`${process.env.REACT_APP_SERVER_HOST}/api/lounge/${loungeId}/enter/${personaId}`, {}, {
                 headers: {
                     Authorization: "Bearer " + token
                 }
             });
-            console.log(`/lounge-room/${loungeId}`);
+            console.log("response: ", response);
             window.location.replace(`/lounge-room/${loungeId}`);
         } catch(err) {
-            console.log(err.message);
-            console.log(`/lounge-room/${loungeId}`);
-            window.location.replace(`/lounge-room/${loungeId}`);
+            // window.location.replace(`/lounge-room/${loungeId}`);
         }
     }
 }
@@ -102,6 +97,10 @@ export function clickUIPrevHandler(prevStyle, prevElems) {
 
 export function clickUIChangeHandler(changeStyle, currentTarget) {
     for(let key in changeStyle) currentTarget.style[key] = changeStyle[key];
+}
+
+export function clickClassListPrevHandler(prevClass, prevElems) {
+    for(let i of prevElems) i.classList.remove(prevClass);
 }
 
 export async function deleteHandler(url, id) {

@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { Layer, Stage } from 'react-konva';
 import { nanoid } from 'nanoid';
+import SockJsClient from 'react-stomp';
 
 import { AttrContextStore as AttrContextImgStore } from '../ideation/store/AttrContext';
 import { AttrContextStore } from './store/AttrContext';
@@ -18,6 +19,7 @@ function Stageboard(props) {
     const attrStore = useContext(AttrContextStore);
     const attrImgStore = useContext(AttrContextImgStore);
     const { state } = useLocation();
+    const $websocket = useRef(null); // socket
     const stageRef = useRef();
 
     const [boardObjectList, setBoardObjectList] = useState([]);
@@ -25,22 +27,47 @@ function Stageboard(props) {
     const [currentObject, setCurrentObject] = useState();
     const [selectedObject, setSelectedObject] = useState(null);
     const [exportImg, setExportImg] = useState();
-    const [whiteboard, setWhiteboard] = useState();
+    const [isDelete, setIsDelete] = useState(false);
 
+    const whiteboard = useFetch(state!==null && roomInfo===undefined && `${process.env.REACT_APP_SERVER_HOST}/api/ideation/${state.ideationId}`);
+
+    //화이트보드 api get
     useEffect(() => {
         if(state !== null) {
-            if(state.ideationId) {
-                getApi(`${process.env.REACT_APP_SERVER_HOST}/api/ideation/${state.ideationId}`).then((data) => setWhiteboard(data.data.whiteboard));
-            }
-    
             if(whiteboard !== undefined){
                 //화이트보드 JSON 형태로 가져오는 부분 !
-                const boardItem = JSON.parse(whiteboard);
+                const boardItem = JSON.parse(whiteboard.whiteboard);
                 setBoardObjectList(boardItem);
-                console.log(whiteboard);
             }
         }
-    }, [state, whiteboard])
+    }, [whiteboard])
+
+    //화이트보드 받아오는 부분 !
+    useEffect(()=> { 
+        console.log(boardObjectList)
+        if(roomInfo !== undefined) {
+            const getLoungeBoard = async () => {
+                const token = localStorage.getItem('token')
+                try {
+                    const res = await axios.get(
+                        `${process.env.REACT_APP_SERVER_HOST}/api/lounge/${roomInfo.id}`, {
+                            headers: {
+                                Authorization: `Bearer ${token}`
+                            }
+                        }
+                    )
+                    if(res.data.whiteboard !== null && res.data.whiteboard !== "undefined") {
+                        let tempBoard = res.data.whiteboard.replaceAll('\'',`\"`);
+                        const board = JSON.parse(tempBoard);
+                        setBoardObjectList(board);
+                    }
+                } catch(err) {
+                    console.log(err)
+                }
+            }
+            getLoungeBoard();
+        }
+    }, [whiteboard])
 
     function dataURItoBlob(dataURI) {
         let byteString = window.atob(dataURI.split(',')[1]);
@@ -83,8 +110,11 @@ function Stageboard(props) {
         }
     }, [attrStore.mode])
 
-    
-    
+    useEffect(() => {
+        if(attrStore.detailMode === 'eraser') {
+            setIsDelete(false);
+        }
+    }, [attrStore.detailMode])
 
     const mouseDownHandler = ({ target }) => {
         setIsDrawing(true);
@@ -167,7 +197,18 @@ function Stageboard(props) {
             attrStore.setMode('choice');
         }
         setIsDrawing(false);
+        if(roomInfo !== undefined) {
+            sendMessage();
+        }
     }
+
+    useEffect(() => {
+        if(attrStore.mode === 'choice') {
+            if(roomInfo !== undefined) {
+                sendMessage();
+            } 
+        }
+    }, [attrStore.mode])
 
     const dropHandler = (e) => {
         e.preventDefault();
@@ -207,11 +248,15 @@ function Stageboard(props) {
     const clickHandler = (e) => {
         const menuStyle = document.querySelector('.menu-Container').style;
         menuStyle.display = 'none';
-        if(e.target === e.target.getStage()) setSelectedObject(null);
+        if(e.target === e.target.getStage()) {
+            setSelectedObject(null);
+            setIsDelete(false);
+        }
         if(attrStore.detailMode === 'eraser' && e.target.constructor.name === 'Line') {
             if(e.target.attrs.globalCompositeOperation === 'source-over') {
                 const temp = boardObjectList.filter((i) => i.id !== e.target.attrs.id);
                 setBoardObjectList(temp);
+                setIsDelete(true);
             }
         }
     }
@@ -222,48 +267,100 @@ function Stageboard(props) {
         menuStyle.display = 'none';
         const temp = boardObjectList.filter( obj => obj.id !== currentObject.attrs.id);
         setBoardObjectList(temp);
+        setIsDelete(true);
     }
 
+    useEffect(() => {
+        if(isDelete) {
+            if(roomInfo !== undefined) {
+                sendMessage();
+            }
+        }
+    }, [isDelete])
+
+    //화이트보드 저장(아이데이션)
     useEffect( async () => {
         const token = localStorage.getItem('token');
         //화이트보드 String 형태로 api에 저장하는 부분 !
         const stringObjectList = JSON.stringify(boardObjectList);
-        console.log(stringObjectList)
-        if(stringObjectList !== "[]") {
-            try {
-                await axios.put(`${process.env.REACT_APP_SERVER_HOST}/api/ideation/whiteboard/${state.ideationId}`,
-                    {
-                        whiteboard : stringObjectList
-                    },
-                    {
-                        headers: {
-                            Authorization: 'Bearer ' + token
+        if(state !== null) {
+            console.log(stringObjectList)
+            if(stringObjectList !== "[]") {
+                try {
+                    await axios.put(`${process.env.REACT_APP_SERVER_HOST}/api/ideation/whiteboard/${state.ideationId}`,
+                        {
+                            whiteboard : stringObjectList
+                        },
+                        {
+                            headers: {
+                                Authorization: 'Bearer ' + token
+                            }
                         }
-                    }
-                );
-            } catch(err) {
-                console.log(err);
+                    );
+                } catch(err) {
+                    console.log(err);
+                }
             }
+        } else {
+           
         }
     }, [boardObjectList])
 
+    const sendMessage = () => {
+        let stringObjectList = JSON.stringify(boardObjectList);
+        let string1 = "[]";
+        try {
+            if(stringObjectList !== '[]') {
+                let string1 = stringObjectList.replaceAll('\"',"\'");
+                $websocket.current.sendMessage(`/lounge/${roomInfo.id}/whiteboard/receive`, `{"whiteboard": "${string1}"}`);
+            } else {
+                $websocket.current.sendMessage(`/lounge/${roomInfo.id}/whiteboard/receive`, `{"whiteboard": "${string1}"}`);
+            }
+        } catch(err) {
+            console.log(err);
+        }
+    }
+
+    const receiveMessage = (msg) => { 
+        let tempBoard = msg.whiteboard.replaceAll('\'',`\"`);
+        const msgObj = JSON.parse(tempBoard);
+        console.log(msgObj)
+        setBoardObjectList(msgObj);
+    }
+    useEffect(()=> {
+        console.log('object list : ', boardObjectList);
+    }, [])
+
     return (
-        <>
+        <div>
+        {roomInfo !== undefined &&
+        <SockJsClient
+            url="http://ation-server.seohyuni.com/ws"
+            topics={[`/lounge/${roomInfo.id}/whiteboard/receive`, 
+                    `/lounge/${roomInfo.id}/whiteboard/send`,]}
+            onMessage={msg => { receiveMessage(msg); }} 
+            ref={$websocket}
+        />}
         <div className="stageboard-container" onDrop={dropHandler} onDragOver={dragOverHandler} style={{position: 'relative'}}>
-            <Stage ref={stageRef} width={1607} height={window.innerHeight-20} onMouseDown={mouseDownHandler} onMouseMove={mouseMoveHandler} onMouseUp={mouseUpHandler} onContextMenu={contextMenuHandler} onClick={clickHandler}>
+            <Stage ref={stageRef} width={1607} height={window.innerHeight-20} onMouseDown={attrStore.mode !== 'choice' && mouseDownHandler} onMouseMove={mouseMoveHandler} onMouseUp={mouseUpHandler} onContextMenu={contextMenuHandler} onClick={clickHandler}>
                 <Layer>
-                    {boardObjectList && boardObjectList.map( (obj, i) => <Elements key={i} type={obj.type} obj={obj}
+                    {
+                    boardObjectList &&
+                    boardObjectList.map( (obj, i) => 
+                    (obj.type && <Elements key={i} type={obj.type} obj={obj}
                     isSelected={isTrue(obj.id, selectedObject)}
                     onSelect={ () => setSelectedObject(obj.id) }
                     onChange={ (newAttrs) => {
                         const objs = boardObjectList.slice();
                         objs[i].property = newAttrs;
                         setBoardObjectList(objs);
+                        roomInfo !== undefined && sendMessage();
                     }}
                     isEditing={isEditing}
                     setIsEditing={setIsEditing}
                     mode={attrStore.mode}
-                    /> )}
+                    /> ))
+                    }
                     
                 </Layer>
             </Stage>
@@ -274,7 +371,7 @@ function Stageboard(props) {
                 <span>삭제</span>
             </div>
         </div>
-        </>
+        </div>
     );
 }
 
