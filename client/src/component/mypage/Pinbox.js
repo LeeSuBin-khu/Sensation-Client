@@ -6,7 +6,6 @@ import "../../assets/css/mypage/pinbox.css";
 import plus from "../../assets/svg/plus.svg";
 import search from "../../assets/svg/search.svg";
 import bin from "../../assets/svg/bin.svg";
-import circle from "../../assets/svg/circle.svg";
 import edit from "../../assets/svg/edit.svg";
 
 import PinEdit from "./PinEdit";
@@ -14,6 +13,7 @@ import PinAdd from "./PinAdd";
 import PinBoardAdd from "./PinBoardAdd";
 import PinBoardEdit from "./PinBoardEdit";
 import Delete from "./Delete";
+import NoPin from "./NoPin";
 
 function Pinbox(props) {
     const cookies = new Cookies;
@@ -99,7 +99,7 @@ function Pinbox(props) {
     //...modal7
 
     const PinBoardImport = async () => {
-        const token = cookies.get('token');
+        const token = localStorage.getItem('token');
         const response = await axios.get(process.env.REACT_APP_SERVER_HOST + `/api/pin-board/?personaId=${activePersonaId}`,{
             headers: {
                 Authorization: "Bearer " + token
@@ -119,7 +119,7 @@ function Pinbox(props) {
     }
 
     const allPinHandler = async () => {
-        const token = cookies.get('token');
+        const token = localStorage.getItem('token');
         if(searchTrue) {
             const response = await axios.get(process.env.REACT_APP_SERVER_HOST + `/api/pin/search?keyword=${pinSearch}&personaId=${activePersonaId}`, {
                     headers: {
@@ -153,7 +153,7 @@ function Pinbox(props) {
     }, [activePersonaId, viewOption, searchTrue]);
 
     const searchBtnClickHandler = async () => {
-        const token = cookies.get('token');
+        const token = localStorage.getItem('token');
         const response = await axios.get(process.env.REACT_APP_SERVER_HOST + `/api/pin/search?keyword=${pinSearch}&personaId=${activePersonaId}`, {
             headers: {
                 Authorization: "Bearer " + token
@@ -203,7 +203,7 @@ function Pinbox(props) {
     }
 
     const pinClickHandler = async (e) => {
-        const token = cookies.get('token');
+        const token = localStorage.getItem('token');
         let doc = "";
         if(e.target.className === "Mypin-item" || e.target.className === "pin-img") {
             console.log(e.target.parentNode);
@@ -237,7 +237,7 @@ function Pinbox(props) {
 
     const pinSearchHandler = async (e) => {
         if(e.key === 'Enter') {
-            // const token = cookies.get('token');
+            // const token = localStorage.getItem('token');
             // const response = await axios.get(process.env.REACT_APP_SERVER_HOST + `/api/pin/search?keyword=${pinSearch}&personaId=${activePersonaId}`, {
             //     headers: {
             //         Authorization: "Bearer " + token
@@ -252,7 +252,7 @@ function Pinbox(props) {
     const pinEditHandler = async (e) => {
         e.stopPropagation();
         console.log(e.target);
-        const token = cookies.get('token');
+        const token = localStorage.getItem('token');
         const pinId = e.target.getAttribute('id');
         const response = await axios.get(process.env.REACT_APP_SERVER_HOST + `/api/pin/${pinId}`, {
             headers: {
@@ -274,7 +274,7 @@ function Pinbox(props) {
 
     const pinBoardItemClickHandler = async (e) => {
         if(e.target.className!=='Mypin-edit2' && e.target.className!=='pin-del2') {
-            const token = cookies.get('token');
+            const token = localStorage.getItem('token');
             const pinBoardId = e.currentTarget.getAttribute("id");
             document.querySelector(".pin-board-name").style.display="flex";
             document.querySelector(".pin-board-name").innerHTML = e.currentTarget.querySelector(".pinBoard-name").innerHTML;
@@ -343,6 +343,7 @@ function Pinbox(props) {
         </div>
         <div className="InsightContent-container">
             {viewOption === 0?
+            allPin.length!==0?
             <div>
             <ul className="allPin-content">
                 {allPin.map( pin => (
@@ -377,6 +378,10 @@ function Pinbox(props) {
                 <Delete DeleteOpen={DeleteOpen} closeDeleteModal={closeDeleteModal} title={'핀 카드'} description={'카드'} deletePinId={deletePinId}/>
             </ul>
             </div>:
+            <div className="noPin-content">
+                <NoPin option={'핀이'}/>
+            </div>:
+            pinboard.length!==0?
             <>
             <ul className="pinBoard-content">
             {pinboard.map( board => (
@@ -398,6 +403,7 @@ function Pinbox(props) {
             </ul>
             <PinBoardEdit pinBoardEditModalOpen={pinBoardEditModalOpen} closePinBoardEditModal={closePinBoardEditModal} BoardEditPosition={BoardEditPosition} clickedPinBoardID={clickedPinBoardID} setAddTrue={setAddTrue}/>
             <Delete DeleteOpen={DeleteBoardOpen} closeDeleteModal={closeDeleteBoardModal} title={'핀보드'} description={'보드'} deletePinId={deletePinBoardId} setAddTrue={setAddTrue}/>
+            
             <ul className="pinItem-content">
                 {pins.length!==0?pins.map( pin => (
                 <li className="pin-item" key={pin.id} id={pin.id}>
@@ -426,13 +432,11 @@ function Pinbox(props) {
                     </div>
                 </li>
                 )):
-                <div className="noPinsPinBoard">
-                    아직 핀이 존재하지 않아요!
-                </div>}
+                <div className="noPin-content"><NoPin option={'핀이'}/></div>}
                 <PinEdit pinEditModalOpen={pinEditModalOpen} closeEditModal={closeEditModal} clickedPin={clickedPin} editPosition={editPosition}/>
                 <Delete DeleteOpen={DeleteOpen} closeDeleteModal={closeDeleteModal} title={'인사이트 카드'} description={'카드'} deletePinId={deletePinId}/>
             </ul>
-            </>}
+            </>:<div className="noPin-content"><NoPin option={'보드가'}/></div>}
         </div>
      </>
     );

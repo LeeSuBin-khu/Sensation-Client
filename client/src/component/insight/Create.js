@@ -27,7 +27,6 @@ function Create(props) {
     const [loading, setLoading] = useState(false);
 
     const CreateInsightCloseHandler = async ({ target }) => {
-        console.log(modalCreate.current);
         if(target.className!=='create-btn2') {
             if(target.className!=='complete-btn' && target.className!=='tag' && target.className!=='close' && target.className!=='skip-btn') {
                 if(modalOpen && !modalCreate.current.contains(target) && target.className!=='create-btn' && target.className!=='prev' && target.className!=='close' && target.className!=='complete-btn') {
@@ -53,7 +52,9 @@ function Create(props) {
                 window.removeEventListener('click', CreateInsightCloseHandler);
             }
         } else {
-            console.log("goodd")
+            return () => {
+            
+              };
         }
     }, [modalOpen]);
 
@@ -67,13 +68,14 @@ function Create(props) {
                     } else {
                         try {
                             const response = await axios.post(process.env.REACT_APP_SERVER_HOST + '/api/insight', {
-                                "insightMainCategoryId": mainCategory,
-                                "insightSubCategoryIdList": ClickedSubCategory,
+                                "mainCategoryId": mainCategory,
+                                "subCategoryIdList": ClickedSubCategory,
                                 "tagList": hashtag,
                                 "url": url
                             });
                             setInsightId(response.data);
                             setInsightTrue(response.status);
+                            console.log(response.data)
                         } catch(err) {
                             setInsightTrue(400);
                         }
@@ -81,8 +83,8 @@ function Create(props) {
                 } else {
                     try {
                         const response = await axios.post(process.env.REACT_APP_SERVER_HOST + '/api/insight', {
-                            "insightMainCategoryId": mainCategory,
-                            "insightSubCategoryIdList": ClickedSubCategory,
+                            "mainCategoryId": mainCategory,
+                            "subCategoryIdList": ClickedSubCategory,
                             "tagList": [],
                             "url": url
                         });
@@ -102,8 +104,6 @@ function Create(props) {
                 }
             } 
         } else {
-            console.log(pageNum);
-            console.log(modalOpen);
             setMainCategory(0);
             setMainCategoryName("");
             setUrl("");
@@ -124,7 +124,7 @@ function Create(props) {
     }
 
     useEffect( async () => {
-        const token = cookies.get('token');
+        const token = localStorage.getItem('token');
         const response = await axios.get(`${process.env.REACT_APP_SERVER_HOST}/api/insight/${InsightId}`, {
             headers: {
                 Authorization: "Bearer " + token
@@ -132,6 +132,9 @@ function Create(props) {
         }
         );
         setPrevImgUrl(response.data.imgPath);
+        return () => {
+          
+          };
     }, [InsightId]);
 
     const onPrevHandler=() => {
@@ -162,7 +165,6 @@ function Create(props) {
         setClickedSubCategory([]);
         setMainCategory(e.target.value);
         setMainCategoryName(e.target.innerHTML);
-        console.log(e.target);
         const response = await axios.get(`${process.env.REACT_APP_SERVER_HOST}/api/category/sub?mainCategoryId=${e.target.value}`);
         setSubCategory(response.data);
         const cateBtn = document.querySelectorAll('.category-btn');
@@ -173,10 +175,7 @@ function Create(props) {
     }
 
     const tagChangeHandler = (e) => {
-        console.log(hashtagLength+"asdf")
-        console.log(hashtag);
         if(hashtagLength < 2){
-            console.log(e.target.value);
             setTag(e.target.value);
         } else {
             e.preventDefault();
@@ -190,13 +189,11 @@ function Create(props) {
             for(var i=0;i<cateBtn.length;i++) {
                 if(!ClickedSubCategory.includes(cateBtn[i].getAttribute('id'))) {
                     cateBtn[i].classList.remove('cateBtn2-clicked');
-                    console.log(ClickedSubCategory);
                 }
             }
             e.target.classList.add('cateBtn2-clicked');
         }
         if(ClickedSubCategory.includes(e.target.getAttribute('id'))) {
-            console.log("asdf")
             setClickedSubCategory(ClickedSubCategory.filter( cate => cate!==e.target.getAttribute('id')));
             e.target.classList.remove('cateBtn2-clicked');
         }
@@ -205,18 +202,12 @@ function Create(props) {
     useEffect(() => {
         if(pageNum===1) {
             if(document.querySelector('.create-btn') && url === "") {
-                // document.querySelector('.create-btn').style.color="#FFA48C";
-                // document.querySelector('.create-btn').style.border="1px solid #FFA48C";
                 document.querySelector('.create-btn').classList.add('noPlayBtn');
             }
         } else if(pageNum===2) {
             if(mainCategory === 0) {
-                // document.querySelector('.create-btn').style.color="#FFA48C";
-                // document.querySelector('.create-btn').style.border="1px solid #FFA48C";
                 document.querySelector('.create-btn').classList.add('noPlayBtn');
             } else {
-                // document.querySelector('.create-btn').style.color="#FE3400";
-                // document.querySelector('.create-btn').style.border="1px solid #FE3400";
                 document.querySelector('.create-btn').classList.remove('noPlayBtn');
             }
             const cateBtn = document.querySelectorAll('.category-btn');
@@ -238,32 +229,31 @@ function Create(props) {
             }
         } else if(pageNum===4) {
             if(document.querySelector('.create-btn2') && hashtag.length === 0) {
-                // document.querySelector('.create-btn2').style.color="#FFA48C";
-                // document.querySelector('.create-btn2').style.border="1px solid #FFA48C";
                 document.querySelector('.create-btn2').classList.add('noPlayBtn');
             } else if(hashtag.length !== 0) {
-                // document.querySelector('.create-btn2').style.color="#FE3400";
-                // document.querySelector('.create-btn2').style.border="1px solid #FE3400";
                 document.querySelector('.create-btn2').classList.remove('noPlayBtn');
             }
         }
+        return () => {
+            
+          };
     }, [modalOpen, url, pageNum, mainCategory, hashtag])
 
     async function readImage (e) {
         var formData = new FormData();
         formData.append('insightImg', e.target.files[0]);
-        console.log(formData);
         setChangeImgFormdata(formData);
         const reader = new FileReader();
         setPrevImgUrl(URL.createObjectURL(e.target.files[0]));
         reader.readAsDataURL(e.target.files[0]);
-        // console.log(reader.readAsDataURL(e.target.files[0]));
     }
 
     useEffect(() => {
         const previewImage = document.getElementsByClassName("upload-file");
         previewImage.src = prevImgUrl.substring(5);
-        console.log(prevImgUrl.substring(5))
+        return () => {
+
+          };
     }, [prevImgUrl])
 
     const tagInputSubmitHandler = (e) => {
@@ -286,6 +276,9 @@ function Create(props) {
         if(hashtag.length < 5 && document.querySelector('.tag-length')) {
             document.querySelector('.tag-length').style.display="none";
         }
+        return () => {
+           
+          };
     }, [hashtag])
     
 

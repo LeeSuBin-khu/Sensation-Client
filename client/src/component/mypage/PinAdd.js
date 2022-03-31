@@ -51,7 +51,7 @@ function PinAdd(props) {
     }, [pinAddModalOpen]);
 
     const PersonaSetting = async () => {
-        const token = cookies.get('token');
+        const token = localStorage.getItem('token');
         const response = await axios.get(
             process.env.REACT_APP_SERVER_HOST + '/api/persona',
             {
@@ -82,7 +82,7 @@ function PinAdd(props) {
 
     const pinboardImport = async () => {
         if(clickedPersonaId !== null) {
-            const token = cookies.get('token');
+            const token = localStorage.getItem('token');
             const response = await axios.get(process.env.REACT_APP_SERVER_HOST + `/api/pin-board?personaId=${clickedPersonaId}`, {
                 headers: {
                     Authorization: "Bearer " + token
@@ -94,15 +94,10 @@ function PinAdd(props) {
 
     useEffect(() => {
         PersonaSetting();
-        // if(clickedPin) {
-        //     setAfterPinboardId(clickedPin.pinBoard.id);
-        //     setAfterTag(clickedPin.tagList);
-        // }
     }, [activePersonaId])
 
     useEffect(() => {
         pinboardImport();
-        console.log(clickedPersonaId, "asdf")
     }, [pinBoardName, clickedPersonaId])
 
     useEffect(() => {
@@ -154,7 +149,7 @@ function PinAdd(props) {
                     setPageNum(3);
                 } else if(e.target.classList.contains('next-btn') && tagList.length !== 0) {
                     try {
-                        const token = cookies.get('token');
+                        const token = localStorage.getItem('token');
                         const response = await axios.post(process.env.REACT_APP_SERVER_HOST + '/api/pin', {
                             "pinBoardId": pinBoardId,
                             "tagList": tagList,
@@ -171,7 +166,7 @@ function PinAdd(props) {
                     }
                 } else if(e.target.className === 'skip-btn') {
                     try {
-                        const token = cookies.get('token');
+                        const token = localStorage.getItem('token');
                         const response = await axios.post(process.env.REACT_APP_SERVER_HOST + '/api/pin', {
                             "pinBoardId": pinBoardId,
                             "tagList": [],
@@ -188,7 +183,7 @@ function PinAdd(props) {
                     }
                 }  
             } else if(pageNum === 1) {
-                if(urlValue === "") {
+                if(!urlTrue) {
                     setPageNum(1);
                 }
             } else if(pageNum === 2) {
@@ -223,7 +218,6 @@ function PinAdd(props) {
                 if(parseInt(personaList[i].getAttribute('value')) === clickedPersonaId) {
                     personaList[i].style.border="1px solid #FE3400";
                 } else {
-                    console.log(clickedPersonaId, parseInt(personaList[i].getAttribute('value')))
                     personaList[i].style.border="0";
                 }
             }
@@ -275,7 +269,7 @@ function PinAdd(props) {
     }
 
     const pinboardCreateClickHandler = async () => {
-        const token = cookies.get('token');
+        const token = localStorage.getItem('token');
         const response = await axios.post(
             process.env.REACT_APP_SERVER_HOST + '/api/pin-board',
             {
@@ -295,7 +289,7 @@ function PinAdd(props) {
 
     const pinboardCreateSubmitHandler = async (e) => {
         if(e.key === 'Enter') {
-            const token = cookies.get('token');
+            const token = localStorage.getItem('token');
             const response = await axios.post(
                 process.env.REACT_APP_SERVER_HOST + '/api/pin-board',
                 {
@@ -321,7 +315,7 @@ function PinAdd(props) {
     }, [pinBoardName]);
 
     // const ModalAddCloseHandler = async () => {
-    //     const token = cookies.get('token');
+    //     const token = localStorage.getItem('token');
     //     const response = await axios.post(process.env.REACT_APP_SERVER_HOST + '/api/pin', {
     //             "pinBoardId": pinBoardId,
     //             "tagList": tagList,
@@ -367,7 +361,6 @@ function PinAdd(props) {
     async function readImage (e) {
         var formData = new FormData();
         formData.append('pinImg', e.target.files[0]);
-        console.log(formData);
         setChangeImgFormdata(formData);
         const reader = new FileReader();
         setPrevImgUrl(URL.createObjectURL(e.target.files[0]));
@@ -375,7 +368,7 @@ function PinAdd(props) {
     }
 
     useEffect( async () => {
-        const token = cookies.get('token');
+        const token = localStorage.getItem('token');
         const response = await axios.get(process.env.REACT_APP_SERVER_HOST + `/api/pin/${newPinId}`,
         {
             headers: {
@@ -384,13 +377,11 @@ function PinAdd(props) {
         }
         );
         setPrevImgUrl(response.data.pinImgPath);
-        console.log(response.data.pinImgPath)
     }, [newPinId]);
 
     useEffect(() => {
         const previewImage = document.getElementsByClassName("upload-file");
         previewImage.src = prevImgUrl.substring(5);
-        console.log(prevImgUrl.substring(5))
     }, [prevImgUrl])
     
     if(pinAddModalOpen) {
@@ -503,27 +494,3 @@ function PinAdd(props) {
 }
 
 export default PinAdd;
-
-
-// return (
-    // (pinAddModalOpen?
-    // <div className="ModalAdd-Container" ref={modalAdd}>
-    //     <div className="Url-container">
-    //         <input className="url-input" value={urlValue} onChange={urlInputChange} placeholder="URL을 입력해주세요."/>
-    //     </div>
-    //     <div className="PinBoard-container">
-    //         {pinboard.map( board => (
-    //             <p className="board-name" id={board.id} onClick={pinBoardClickHandler}>{board.name}</p>
-    //         ))}
-    //     </div>
-    //     <div className="Tag-container">
-    //         <div className="tag-after"></div>
-    //         {tagList.length!==2?<input className="tag-before" value={tagValue} onChange={tagChangeHandler} onKeyPress={tagInputSubmitHandler} maxlength='8'/>:null}
-    //     </div>
-    //         {/* {tagList.length===2?<p>최대 2개까지 추가할 수 있습니다</p>:null} */}
-    //     <div className="Close-container">
-    //         <button className="close-btn" onClick={ModalAddCloseHandler}>저장</button>
-    //     </div>
-    // </div>
-    // :null)
-    // );
